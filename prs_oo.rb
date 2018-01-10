@@ -34,6 +34,7 @@ class Player
   def initialize(player_type = :human)
     @player_type = player_type
     @move = nil
+
   end
 
   def human?
@@ -56,24 +57,6 @@ class Player
   end
 end
 
-
-class Move
-  def initialize
-
-  end
-end
-
-class Rule
-  def initialize
-
-  end
-end
-
-def compare(move1, move2)
-
-end
-
-
 class RPSGame
   attr_accessor :human, :computer 
   
@@ -88,6 +71,25 @@ class RPSGame
 
   def display_goodbye_message
     puts "Thanks for playing Rock, Paper, Scissors!"
+  end
+
+  def display_winner
+    puts "You chose #{human.move}."
+    puts "The computer chose #{computer.move}"
+    case human.move
+    when 'rock'
+      puts "It's a tie!" if computer.move.eql?('rock')
+      puts "You won!" if computer.move.eql?('scissors')
+      puts "Computer won!" if computer.move.eql?('paper')
+    when 'paper'
+      puts "It's a tie!" if computer.move.eql?('paper')
+      puts "You won!" if computer.move.eql?('rock')
+      puts "Computer won!" if computer.move.eql?('scissors')
+    when 'scissors'
+      puts "It's a tie!" if computer.move.eql?('scissors')
+      puts "You won!" if computer.move.eql?('paper')
+      puts "Computer won!" if computer.move.eql?('rock')
+    end
   end
 
   def play
