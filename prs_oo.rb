@@ -28,13 +28,29 @@ Rule
 
 
 class Player
-  attr_accessor :move
+  attr_accessor :move, :player_name
   attr_reader :player_type
 
   def initialize(player_type = :human)
     @player_type = player_type
+    @player_name
     @move = nil
+    set_name
+  end
 
+  def set_name
+    if human?
+      name = nil
+      loop do
+        puts "What's your name?"
+        name = gets.chomp
+        break unless name.empty?
+        puts "Sorry, you must enter a value."
+      end
+      self.player_name = name
+    else
+      self.player_name = %w(R2D2 C3PO Computer Hal).sample
+    end
   end
 
   def human?
@@ -66,36 +82,36 @@ class RPSGame
   end
 
   def display_welcome_message
-    puts "Welcome to Rock, Paper, Scissors!"
+    puts "Hi #{human.player_name}! Welcome to Rock, Paper, Scissors!"
   end
 
   def display_goodbye_message
-    puts "Thanks for playing Rock, Paper, Scissors!"
+    puts "Thanks for playing Rock, Paper, Scissors, #{human.player_name}!"
   end
 
   def display_winner
-    puts "You chose #{human.move}."
-    puts "The computer chose #{computer.move}"
+    puts "#{human.player_name} chose #{human.move}."
+    puts "#{computer.player_name} chose #{computer.move}"
     case human.move
     when 'rock'
       puts "It's a tie!" if computer.move.eql?('rock')
-      puts "You won!" if computer.move.eql?('scissors')
-      puts "Computer won!" if computer.move.eql?('paper')
+      puts "#{human.player_name} won!" if computer.move.eql?('scissors')
+      puts "#{computer.player_name} won!" if computer.move.eql?('paper')
     when 'paper'
       puts "It's a tie!" if computer.move.eql?('paper')
-      puts "You won!" if computer.move.eql?('rock')
-      puts "Computer won!" if computer.move.eql?('scissors')
+      puts "#{human.player_name} won!" if computer.move.eql?('rock')
+      puts "#{computer.player_name} won!" if computer.move.eql?('scissors')
     when 'scissors'
       puts "It's a tie!" if computer.move.eql?('scissors')
-      puts "You won!" if computer.move.eql?('paper')
-      puts "Computer won!" if computer.move.eql?('rock')
+      puts "#{human.player_name} won!" if computer.move.eql?('paper')
+      puts "#{computer.player_name} won!" if computer.move.eql?('rock')
     end
   end
 
   def play_again?
     answer = nil
     loop do
-      puts "Would you like to play again? (y/n)"
+      puts "Would you like to play again, #{human.player_name}? (y/n)"
       answer = gets.chomp
       break if ['y', 'n'].include? answer.downcase
       puts 'Sorry, must be y or n.'
