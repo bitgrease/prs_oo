@@ -29,47 +29,49 @@ Rule
 
 class Player
   attr_accessor :move, :player_name
-  attr_reader :player_type
+end
 
-  def initialize(player_type = :human)
-    @player_type = player_type
-    @player_name
-    @move = nil
+class Human < Player
+  def initialize
     set_name
   end
 
   def set_name
-    if human?
-      name = nil
-      loop do
-        puts "What's your name?"
-        name = gets.chomp
-        break unless name.empty?
-        puts "Sorry, you must enter a value."
-      end
-      self.player_name = name
-    else
-      self.player_name = %w(R2D2 C3PO Computer Hal).sample
+    name = nil
+    loop do
+      puts "What's your name?"
+      name = gets.chomp
+      break unless name.empty?
+      puts "Sorry, you must enter a value."
     end
-  end
-
-  def human?
-    player_type.eql?(:human)
+    self.player_name = name
   end
 
   def choose
-    if human?
-      choice = nil
-      loop do
-        puts "Please choose rock, paper, or scissors:"
-        choice = gets.chomp
-        break if %w(rock paper scissors).include?(choice)
-        puts 'Sorry, invalid choice'
-      end
-      self.move = choice
-    else
-      self.move = %w(rock paper scissors).sample
+    choice = nil
+    loop do
+      puts "Please choose rock, paper, or scissors:"
+      choice = gets.chomp.downcase
+      break if %w(rock paper scissors).include?(choice)
+      puts 'Sorry, invalid choice'
     end
+    self.move = choice
+  end
+end
+
+
+
+class Computer < Player
+  def initialize
+    set_name
+  end
+
+  def set_name
+    self.player_name = %w(R2D2 C3PO Computer Hal).sample
+  end
+
+  def choose
+    self.move = %w(rock paper scissors).sample
   end
 end
 
@@ -77,8 +79,8 @@ class RPSGame
   attr_accessor :human, :computer 
   
   def initialize
-    @human = Player.new
-    @computer = Player.new(:computer)
+    @human = Human.new
+    @computer = Computer.new
   end
 
   def display_welcome_message
