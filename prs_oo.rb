@@ -1,3 +1,4 @@
+require 'pry'
 # Paper Rock Scissors
 # User makes choice
 # Computer makes choice
@@ -26,6 +27,56 @@ Rule
 -compare
 =end
 
+class Move
+  VALUES = %w(rock paper scissors)
+
+  def initialize(value)
+    @value = value
+  end
+
+  def scissors?
+    @value.eql?('scissors')
+  end
+
+  def rock?
+    @value.eql?('rock')
+  end
+
+  def paper?
+    @value.eql?('paper')
+  end
+
+  def > (other_move)
+    if rock?
+      return true if other_move.scissors?
+      return false
+    elsif paper?
+      return true if other_move.rock?
+      return false
+    else scissors?
+      return true if other_move.paper?
+      return false
+    end
+  end
+
+  def < (other_move)
+    if rock?
+      return true if other_move.paper?
+      return false
+    elsif paper?
+      return true if other_move.scissors?
+      return false
+    else scissors?
+      return true if other_move.rock?
+      return false
+    end
+  end
+
+  def to_s
+    @value
+  end
+end
+
 
 class Player
   attr_accessor :move, :player_name
@@ -51,11 +102,11 @@ class Human < Player
     choice = nil
     loop do
       puts "Please choose rock, paper, or scissors:"
-      choice = gets.chomp.downcase
-      break if %w(rock paper scissors).include?(choice)
+      choice = gets.chomp.downcase  
+      break if Move::VALUES.include?(choice)
       puts 'Sorry, invalid choice'
     end
-    self.move = choice
+    self.move = Move.new(choice)
   end
 end
 
@@ -71,7 +122,7 @@ class Computer < Player
   end
 
   def choose
-    self.move = %w(rock paper scissors).sample
+    self.move = Move.new(Move::VALUES.sample)
   end
 end
 
@@ -94,19 +145,13 @@ class RPSGame
   def display_winner
     puts "#{human.player_name} chose #{human.move}."
     puts "#{computer.player_name} chose #{computer.move}"
-    case human.move
-    when 'rock'
-      puts "It's a tie!" if computer.move.eql?('rock')
-      puts "#{human.player_name} won!" if computer.move.eql?('scissors')
-      puts "#{computer.player_name} won!" if computer.move.eql?('paper')
-    when 'paper'
-      puts "It's a tie!" if computer.move.eql?('paper')
-      puts "#{human.player_name} won!" if computer.move.eql?('rock')
-      puts "#{computer.player_name} won!" if computer.move.eql?('scissors')
-    when 'scissors'
-      puts "It's a tie!" if computer.move.eql?('scissors')
-      puts "#{human.player_name} won!" if computer.move.eql?('paper')
-      puts "#{computer.player_name} won!" if computer.move.eql?('rock')
+
+    if human.move > computer.move
+      puts "#{human.player_name} won!"
+    elsif human.move < computer.move
+      puts "#{computer.player_name} won."
+    else
+      puts "It's a tie."
     end
   end
 
