@@ -1,34 +1,18 @@
-require 'pry'
-# Paper Rock Scissors
-# User makes choice
-# Computer makes choice
-# Winner is displayed
-
 =begin
-  LS Description:
-  Rock, Paper, Scissors is a two-player game where each player chooses
-one of three possible moves: rock, paper, or scissors. The chosen moves
-will then be compared to see who wins, according to the following rules:
+  
+ Maybe make a ScoreBoard class that takes the player scores. Scoreboard can output and format the score. Scoreboard can
+ show the winner too if it's told the winner's name.
 
-- rock beats scissors
-- scissors beats paper
-- paper beats rock
+ RPSGame class still determines winner. Sends info to ScorBoard instance for formatting and output.
 
-If the players chose the same move, then it's a tie.
-
-Nouns: player, move, rule
-Verbs: choose, compare
-
-Player
-- choose
-Move
-Rule
-
--compare
 =end
+  
+end
 
+
+require 'pry'
 class Move
-  VALUES = %w(rock paper scissors)
+  VALUES = %w[rock paper scissors]
 
   def initialize(value)
     @value = value
@@ -46,30 +30,16 @@ class Move
     @value.eql?('paper')
   end
 
-  def > (other_move)
-    if rock?
-      return true if other_move.scissors?
-      return false
-    elsif paper?
-      return true if other_move.rock?
-      return false
-    else scissors?
-      return true if other_move.paper?
-      return false
-    end
+  def >(other_move)
+    (rock? && other_move.scissors?) ||
+      (paper? && other_move.rock?) ||
+      (scissors? && other_move.paper?)
   end
 
-  def < (other_move)
-    if rock?
-      return true if other_move.paper?
-      return false
-    elsif paper?
-      return true if other_move.scissors?
-      return false
-    else scissors?
-      return true if other_move.rock?
-      return false
-    end
+  def <(other_move)
+    (rock? && other_move.paper?) ||
+      (paper? && other_move.scissors?) ||
+      (scissors? && other_move.rock?)
   end
 
   def to_s
@@ -77,13 +47,17 @@ class Move
   end
 end
 
-
 class Player
-  attr_accessor :move, :player_name
+  attr_accessor :move, :name, :score
+
+  def initialize
+    self.score = 0
+  end
 end
 
 class Human < Player
   def initialize
+    super
     set_name
   end
 
@@ -95,14 +69,14 @@ class Human < Player
       break unless name.empty?
       puts "Sorry, you must enter a value."
     end
-    self.player_name = name
+    self.name = name
   end
 
   def choose
     choice = nil
     loop do
       puts "Please choose rock, paper, or scissors:"
-      choice = gets.chomp.downcase  
+      choice = gets.chomp.downcase
       break if Move::VALUES.include?(choice)
       puts 'Sorry, invalid choice'
     end
@@ -110,15 +84,14 @@ class Human < Player
   end
 end
 
-
-
 class Computer < Player
   def initialize
+    super
     set_name
   end
 
   def set_name
-    self.player_name = %w(R2D2 C3PO Computer Hal).sample
+    self.name = %w[R2D2 C3PO Computer Hal].sample
   end
 
   def choose
@@ -127,43 +100,64 @@ class Computer < Player
 end
 
 class RPSGame
-  attr_accessor :human, :computer 
-  
+  attr_accessor :human, :computer
+
   def initialize
     @human = Human.new
     @computer = Computer.new
   end
 
   def display_welcome_message
-    puts "Hi #{human.player_name}! Welcome to Rock, Paper, Scissors!"
+    puts "Hi #{human.name}! Welcome to Rock, Paper, Scissors!"
   end
 
-  def display_goodbye_message
-    puts "Thanks for playing Rock, Paper, Scissors, #{human.player_name}!"
+  def display_score
+    if (human.score == computer.score)
+      puts "Sorry, no winner. It was a tie."
+      return
+    end
+
+    winner = human.score > computer.score ? human : computer
+
+    p "Score was #{human.name} : #{human.score}"
+    puts " and #{computer.name} : #{computer.score}"
+    puts "#{winner.name} wins!"
+  end
+
+  def display_player_choices
+    puts "#{human.name} chose #{human.move}."
+    puts "#{computer.name} chose #{computer.move}"
   end
 
   def display_winner
-    puts "#{human.player_name} chose #{human.move}."
-    puts "#{computer.player_name} chose #{computer.move}"
-
     if human.move > computer.move
-      puts "#{human.player_name} won!"
+      puts "#{human.name} won!"
+      human.score += 1
     elsif human.move < computer.move
-      puts "#{computer.player_name} won."
+      puts "#{computer.name} won."
+      computer.score += 1
     else
       puts "It's a tie."
     end
   end
 
+  def display_overall_winner
+    puts "#{[human, computer].find {|p| p.score == 10}.name} is the overall winner!"
+  end
+
   def play_again?
     answer = nil
     loop do
-      puts "Would you like to play again, #{human.player_name}? (y/n)"
+      puts "Would you like to play again, #{human.name}? (y/n)"
       answer = gets.chomp
-      break if ['y', 'n'].include? answer.downcase
+      break if %w[y n].include? answer.downcase
       puts 'Sorry, must be y or n.'
     end
     answer.eql?('y')
+  end
+
+  def overall_winner?
+    (human.score == 10) || (computer.score == 10)
   end
 
   def play
@@ -172,10 +166,15 @@ class RPSGame
     loop do
       human.choose
       computer.choose
+      display_player_choices
       display_winner
-      break unless play_again?
-      display_goodbye_message
+      binding.pry
+      break if overall_winner?
+      break unless play_again? 
+      display_score
     end
+    display_score
+    display_overall_winner
   end
 end
 
