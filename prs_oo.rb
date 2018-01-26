@@ -1,16 +1,5 @@
-=begin
-  
- Maybe make a ScoreBoard class that takes the player scores. Scoreboard can output and format the score. Scoreboard can
- show the winner too if it's told the winner's name.
-
- RPSGame class still determines winner. Sends info to ScoreBoard instance for formatting and output.
-
-=end
-
 require 'pry'
-
 class ScoreBoard
-
   def initialize(name_one, name_two)
     @name_one = name_one
     @name_two = name_two
@@ -35,40 +24,32 @@ class ScoreBoard
     @scores.values.any? { |score| score.eql?(10) }
   end
 
-  def get_winner
+  def winner_name
     @scores.key(10)
   end
 end
 
 class Move
-  VALUES = %w[rock paper scissors]
+  attr_reader :value
+  VALUES = %w[rock paper scissors lizard spock]
+  WINNING_MOVES = {
+    'spock' => %w[rock scissors],
+    'scissors' => %w[lizard paper],
+    'paper' => %w[spock rock],
+    'rock' => %w[paper lizard],
+    'lizard' => %w[paper spock]
+  }
 
   def initialize(value)
     @value = value
   end
 
-  def scissors?
-    @value.eql?('scissors')
-  end
-
-  def rock?
-    @value.eql?('rock')
-  end
-
-  def paper?
-    @value.eql?('paper')
-  end
-
   def >(other_move)
-    (rock? && other_move.scissors?) ||
-      (paper? && other_move.rock?) ||
-      (scissors? && other_move.paper?)
+    WINNING_MOVES[value].include?(other_move.value)
   end
 
   def <(other_move)
-    (rock? && other_move.paper?) ||
-      (paper? && other_move.scissors?) ||
-      (scissors? && other_move.rock?)
+    WINNING_MOVES[other_move.value].include?(value)
   end
 
   def to_s
@@ -99,7 +80,7 @@ class Human < Player
   def choose
     choice = nil
     loop do
-      puts "Please choose rock, paper, or scissors:"
+      puts "Please choose rock, paper, scissors, lizard or spock:"
       choice = gets.chomp.downcase
       break if Move::VALUES.include?(choice)
       puts 'Sorry, invalid choice'
@@ -144,10 +125,13 @@ class RPSGame
   def display_winner
     human_name = human.name
     computer_name = computer.name
-    if human.move > computer.move
+    human_move = human.move
+    computer_move = computer.move
+
+    if human_move > computer_move
       puts "#{human_name} won!"
       score_board.increase_score(human_name)
-    elsif human.move < computer.move
+    elsif human_move < computer_move
       puts "#{computer_name} won!"
       score_board.increase_score(computer_name)
     else
@@ -156,7 +140,7 @@ class RPSGame
   end
 
   def display_overall_winner
-    puts "#{score_board.get_winner} is the overall winner!"
+    puts "#{score_board.winner_name} is the overall winner!"
   end
 
   def play_again?
@@ -170,8 +154,12 @@ class RPSGame
     answer.eql?('y')
   end
 
-  def overall_winner?
-    (human.score == 10) || (computer.score == 10)
+  def play_single_round
+    human.choose
+    computer.choose
+    display_player_choices
+    display_winner
+    sleep 2
   end
 
   def play
@@ -179,21 +167,15 @@ class RPSGame
     score_board.display_score
 
     loop do
-      human.choose
-      computer.choose
-      display_player_choices
-      display_winner
-      sleep 2
-
+      play_single_round
       system('cls') || system('clear')
       score_board.display_score
-      break if score_board.winner?      
-      break unless play_again?
+      break unless !score_board.winner? || play_again?
     end
-    system('cls') || system('clear')     
+    system('cls') || system('clear')
     display_overall_winner
   end
 end
 
-system('cls') || system('clear') 
+system('cls') || system('clear')
 RPSGame.new.play
