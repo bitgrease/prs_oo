@@ -1,4 +1,33 @@
 require 'pry'
+
+class GameHistory
+  MOVE_KEYS = %w[spock lizard paper rock scissors]
+
+  def initialize
+    @history = {}
+    @history[:human] = Array.new(MOVE_KEYS.size,0)
+    @history[:computer] = Array.new(MOVE_KEYS.size,0)
+  end
+
+  def update(human_move, computer_move)
+    @history[:computer][MOVE_KEYS.index(computer_move.value)] += 1
+    @history[:human][MOVE_KEYS.index(human_move.value)] += 1
+  end
+
+  def get_history
+    self.to_s
+  end
+
+  def to_s
+    @history.keys.each do |player|
+      puts "#{player.to_s.capitalize} moves:"
+      MOVE_KEYS.each_with_index do |move, idx|
+        puts "#{move} -> #{@history[player][idx]}"
+      end
+    end
+  end
+end
+
 class ScoreBoard
   def initialize(name_one, name_two)
     @name_one = name_one
@@ -105,12 +134,13 @@ class Computer < Player
 end
 
 class RPSGame
-  attr_accessor :human, :computer, :score_board
+  attr_accessor :human, :computer, :score_board, :game_history
 
   def initialize
     @human = Human.new
     @computer = Computer.new
     @score_board = ScoreBoard.new(human.name, computer.name)
+    @game_history = GameHistory.new
   end
 
   def display_welcome_message
@@ -159,6 +189,7 @@ class RPSGame
     computer.choose
     display_player_choices
     display_winner
+    game_history.update(human.move, computer.move)
     sleep 2
   end
 
@@ -168,6 +199,7 @@ class RPSGame
 
     loop do
       play_single_round
+      binding.pry
       system('cls') || system('clear')
       score_board.display_score
       break unless !score_board.winner? || play_again?
