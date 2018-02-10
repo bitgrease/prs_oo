@@ -199,7 +199,6 @@ class RPSGame
 
     loop do
       play_single_round
-      binding.pry
       system('cls') || system('clear')
       score_board.display_score
       break unless !score_board.winner? || play_again?
