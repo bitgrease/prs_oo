@@ -27,8 +27,9 @@ class GameHistory
     @game_results.count { |game| COMPUTER_NAMES.include? game.winner }
   end
 
-  def computer_win_rate(move)
-    number_of_computer_wins / games_played.to_f
+  def computer_loss_rate(move)
+    return 1.0 if games_played..zero? || times_used(move).zero? # TODO add times_used(move) method
+    1 - number_of_computer_winws(move) / games_played.to_f # TODO fix
   end
 
   def update(computer_move, human_move, winner_name)
@@ -136,8 +137,11 @@ class Computer < Player
     self.name = %w[R2D2 C3PO Computer Hal].sample
   end
 
-  def choose
+  def choose(game_history)
     self.move = Move.new(Move::VALUES.sample)
+    return move if game_history.computer_loss_rate(move) > 0.6
+
+    self.move = Move.new(Move::VALUES.select { |val| val != move }.sample)
   end
 end
 
@@ -203,8 +207,9 @@ class RPSGame
 
   def play_single_round
     human.choose
-    computer.choose
+    computer.choose(game_history)
     display_player_choices
+    binding.pry
     display_winner_and_update_scoreboard
     game_history.update(computer.move, human.move, 
       find_winner(computer, human))
