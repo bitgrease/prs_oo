@@ -1,30 +1,38 @@
 require 'pry'
+#TODO - Check for move win rate when computer chooses and implement logic to re-choose winningest move
+#  maybe create a new array of moves based on win_rate with highest win rate in array most times and others
+#  in array decreasing amounts.
+
+COMPUTER_NAMES = %w[R2D2 C3PO Computer Hal].freeze
+
+class GameResults
+  attr_accessor :computer_move, :human_move, :winner
+  def initialize(computer_move, human_move, winner_name)
+    @computer_move = computer_move
+    @human_move = human_move
+    @winner = winner_name
+  end
+end
 
 class GameHistory
-  MOVE_KEYS = %w[spock lizard paper rock scissors]
-
   def initialize
-    @history = {}
-    @history[:human] = Array.new(MOVE_KEYS.size,0)
-    @history[:computer] = Array.new(MOVE_KEYS.size,0)
+    @game_results = []
   end
 
-  def update(human_move, computer_move)
-    @history[:computer][MOVE_KEYS.index(computer_move.value)] += 1
-    @history[:human][MOVE_KEYS.index(human_move.value)] += 1
+  def games_played
+    @game_results.size
   end
 
-  def get_history
-    self.to_s
+  def number_of_computer_wins
+    @game_results.count { |game| COMPUTER_NAMES.include? game.winner }
   end
 
-  def to_s
-    @history.keys.each do |player|
-      puts "#{player.to_s.capitalize} moves:"
-      MOVE_KEYS.each_with_index do |move, idx|
-        puts "#{move} -> #{@history[player][idx]}"
-      end
-    end
+  def computer_win_rate(move)
+    number_of_computer_wins / games_played.to_f
+  end
+
+  def update(computer_move, human_move, winner_name)
+    @game_results << GameResults.new(computer_move, human_move, winner_name)
   end
 end
 
@@ -152,20 +160,29 @@ class RPSGame
     puts "#{computer.name} chose #{computer.move}"
   end
 
-  def display_winner
+  def find_winner(computer, human)
     human_name = human.name
     computer_name = computer.name
     human_move = human.move
     computer_move = computer.move
 
     if human_move > computer_move
-      puts "#{human_name} won!"
-      score_board.increase_score(human_name)
+      return human_name
     elsif human_move < computer_move
-      puts "#{computer_name} won!"
-      score_board.increase_score(computer_name)
+      return computer_name
     else
+      return 'tie'
+    end
+  end
+
+  def display_winner_and_update_scoreboard
+    winner_name = find_winner(computer, human)
+
+    if winner_name.eql?('tie')
       puts "It's a tie."
+    else
+      puts "#{winner_name} won!"
+      score_board.increase_score(winner_name)
     end
   end
 
@@ -188,9 +205,11 @@ class RPSGame
     human.choose
     computer.choose
     display_player_choices
-    display_winner
-    game_history.update(human.move, computer.move)
+    display_winner_and_update_scoreboard
+    game_history.update(computer.move, human.move, 
+      find_winner(computer, human))
     sleep 2
+    binding.pry
   end
 
   def play
