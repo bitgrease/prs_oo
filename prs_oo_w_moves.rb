@@ -1,31 +1,20 @@
 require 'pry'
 
 class GameHistory
-  MOVE_KEYS = %w[spock lizard paper rock scissors]
-
-  def initialize
-    @history = {}
-    @history[:human] = [0, 0, 0, 0, 0]
-    @history[:computer] = [0, 0, 0, 0, 0]
+  attr_reader :player_name, :game_results
+  def initialize(player_name)
+    @player_name = player_name
+    @game_results = {
+      :wins => [],
+      :losses => []
+    }
   end
 
-  def update(human_move, computer_move)
-    @history[:computer][MOVE_KEYS.index_of(computer_move.value)] += 1
-    @history[:human][MOVE_KEYS.index_of(human_move.value)] += 1
-  end
-
-  def get_history
-    this.to_s
-  end
-
-  def to_s
-    puts 'Player Moves:'
-    @history.keys.each do |player|
-      puts "#{player.to_s.capitalize} moves:"
-      @history[player].each_with_index do
-        |count, idx| puts "#{MOVE_KEYS[idx]} -> #{count}"
-      end
-      puts
+  def update(winner_name, move)
+    if player_name.eql?(winner_name)
+      @game_results[:wins] = move
+    else 
+      game_results[:losses] = move
     end
   end
 end
@@ -176,13 +165,13 @@ class Computer < Player
 end
 
 class RPSGame
-  attr_accessor :human, :computer, :score_board, :game_history
+  attr_accessor :human, :computer, :score_board, :history
 
   def initialize
     @human = Human.new
     @computer = Computer.new
     @score_board = ScoreBoard.new(human.name, computer.name)
-    @game_history = GameHistory.new
+    @history = GameHistory.new(computer.name)
   end
 
   def display_welcome_message
@@ -200,16 +189,21 @@ class RPSGame
     human_move = human.move
     computer_move = computer.move
 
+    # Record move that computer won or lost with
+    # Can get win percentage by number of times current move is in wins / total # of moves (both win and losses)
+    # if win percentage is < 60% then load an array to lessen chance of that move being selected.
+    # Deal with divide by zero issue when first starting.
     if human_move > computer_move
       puts "#{human_name} won!"
       score_board.increase_score(human_name)
+      history.update(human_name, computer_move)
     elsif human_move < computer_move
       puts "#{computer_name} won!"
       score_board.increase_score(computer_name)
+      history.update(computer_name, computer_move)
     else
       puts "It's a tie."
     end
-    game_history.update(human_move, computer_move)
   end
 
   def display_overall_winner
@@ -232,6 +226,7 @@ class RPSGame
     computer.choose
     display_player_choices
     display_winner
+    binding.pry
     sleep 2
   end
 
