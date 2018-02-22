@@ -12,9 +12,19 @@ class GameHistory
 
   def update(winner_name, move)
     if player_name.eql?(winner_name)
-      @game_results[:wins] = move
+      game_results[:wins] << move
     else 
-      game_results[:losses] = move
+      game_results[:losses] << move
+    end
+  end
+
+  def move_loss_rate(move)
+    num_move_losses = @game_results[:losses].select { |losing_move| losing_move.eql?(move) }.size
+    total_games = game_results[:wins].size + game_results[:losses].size
+    if total_games.zero?
+      0
+    else
+      num_move_losses / (Float total_games)
     end
   end
 end
@@ -159,8 +169,14 @@ class Computer < Player
     self.name = %w[R2D2 C3PO Computer Hal].sample
   end
 
-  def choose
+  def choose(history)
     self.move = @moves[Move::VALUES.sample]
+    weighted_moves = Move::VALUES.dup * 2
+    until history.move_loss_rate(move.value) < 0.6
+      weighted_moves.delete_at(weighted_moves.index(move.value))
+      self.move = weighted_moves.sample
+    end
+    move
   end
 end
 
@@ -170,7 +186,7 @@ class RPSGame
   def initialize
     @human = Human.new
     @computer = Computer.new
-    @score_board = ScoreBoard.new(human.name, computer.name)
+    @score_board = ScoreBoard.new(@human.name, @computer.name)
     @history = GameHistory.new(computer.name)
   end
 
@@ -189,18 +205,14 @@ class RPSGame
     human_move = human.move
     computer_move = computer.move
 
-    # Record move that computer won or lost with
-    # Can get win percentage by number of times current move is in wins / total # of moves (both win and losses)
-    # if win percentage is < 60% then load an array to lessen chance of that move being selected.
-    # Deal with divide by zero issue when first starting.
     if human_move > computer_move
       puts "#{human_name} won!"
       score_board.increase_score(human_name)
-      history.update(human_name, computer_move)
+      history.update(human_name, computer_move.value)
     elsif human_move < computer_move
       puts "#{computer_name} won!"
       score_board.increase_score(computer_name)
-      history.update(computer_name, computer_move)
+      history.update(computer_name, computer_move.value)
     else
       puts "It's a tie."
     end
@@ -223,10 +235,9 @@ class RPSGame
 
   def play_single_round
     human.choose
-    computer.choose
+    computer.choose(history)
     display_player_choices
     display_winner
-    binding.pry
     sleep 2
   end
 
