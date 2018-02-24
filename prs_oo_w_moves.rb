@@ -169,12 +169,22 @@ class Computer < Player
     self.name = %w[R2D2 C3PO Computer Hal].sample
   end
 
-  def choose(history)
-    self.move = @moves[Move::VALUES.sample]
-    weighted_moves = Move::VALUES.dup * 2
-    until history.move_loss_rate(move.value) < 0.6
-      weighted_moves.delete_at(weighted_moves.index(move.value))
-      self.move = weighted_moves.sample
+  def choose(history, player_move)
+    binding.pry
+    case name
+    when 'R2D2' then self.move = Move.new('rock')
+    when 'Hal'
+      Move::WINNING_MOVES.keys.each do |move_option|
+        self.move = Move.new(move_option) if Move::WINNING_MOVES[move_option].include?(player_move)
+      end
+      binding.pry
+    else
+      self.move = @moves[Move::VALUES.sample]
+      weighted_moves = Move::VALUES.dup * 2
+      until history.move_loss_rate(move.value) < 0.6
+        weighted_moves.delete_at(weighted_moves.index(move.value))
+        self.move = weighted_moves.sample
+      end
     end
     move
   end
@@ -235,13 +245,14 @@ class RPSGame
 
   def play_single_round
     human.choose
-    computer.choose(history)
+    computer.choose(history, human.move.value)
     display_player_choices
     display_winner
     sleep 2
   end
 
   def play
+    binding.pry
     display_welcome_message
     score_board.display_score
 
