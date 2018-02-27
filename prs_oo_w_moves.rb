@@ -167,17 +167,19 @@ class Computer < Player
 
   def set_name
     self.name = %w[R2D2 C3PO Computer Hal].sample
+    binding.pry
   end
 
   def choose(history, player_move)
-    binding.pry
     case name
     when 'R2D2' then self.move = Move.new('rock')
     when 'Hal'
       Move::WINNING_MOVES.keys.each do |move_option|
         self.move = Move.new(move_option) if Move::WINNING_MOVES[move_option].include?(player_move)
       end
-      binding.pry
+      # Seems to work right but results was opposite of what I expected.
+      # Hal choose paper, I choose rock but I still won. Hal should have won.
+      # Look at comparison logic
     else
       self.move = @moves[Move::VALUES.sample]
       weighted_moves = Move::VALUES.dup * 2
@@ -246,13 +248,13 @@ class RPSGame
   def play_single_round
     human.choose
     computer.choose(history, human.move.value)
+    binding.pry
     display_player_choices
     display_winner
     sleep 2
   end
 
   def play
-    binding.pry
     display_welcome_message
     score_board.display_score
 
