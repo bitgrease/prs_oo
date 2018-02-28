@@ -5,21 +5,24 @@ class GameHistory
   def initialize(player_name)
     @player_name = player_name
     @game_results = {
-      :wins => [],
-      :losses => []
+      wins: [],
+      losses: []
     }
   end
 
   def update(winner_name, move)
     if player_name.eql?(winner_name)
       game_results[:wins] << move
-    else 
+    else
       game_results[:losses] << move
     end
   end
 
   def move_loss_rate(move)
-    num_move_losses = @game_results[:losses].select { |losing_move| losing_move.eql?(move) }.size
+    num_move_losses = @game_results[:losses].select do |losing_move|
+      losing_move.eql?(move)
+    end.size
+
     total_games = game_results[:wins].size + game_results[:losses].size
     if total_games.zero?
       0
@@ -167,7 +170,6 @@ class Computer < Player
 
   def set_name
     self.name = %w[R2D2 C3PO Computer Hal].sample
-    binding.pry
   end
 
   def choose(history, player_move)
@@ -177,9 +179,6 @@ class Computer < Player
       Move::WINNING_MOVES.keys.each do |move_option|
         self.move = Move.new(move_option) if Move::WINNING_MOVES[move_option].include?(player_move)
       end
-      # Seems to work right but results was opposite of what I expected.
-      # Hal choose paper, I choose rock but I still won. Hal should have won.
-      # Look at comparison logic
     else
       self.move = @moves[Move::VALUES.sample]
       weighted_moves = Move::VALUES.dup * 2
@@ -248,7 +247,6 @@ class RPSGame
   def play_single_round
     human.choose
     computer.choose(history, human.move.value)
-    binding.pry
     display_player_choices
     display_winner
     sleep 2
