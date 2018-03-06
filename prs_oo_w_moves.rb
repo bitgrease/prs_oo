@@ -12,9 +12,9 @@ class GameHistory
 
   def update(winner_name, move)
     if player_name.eql?(winner_name)
-      game_results[:wins] << move
+      game_results[:wins] << move.value
     else
-      game_results[:losses] << move
+      game_results[:losses] << move.value
     end
   end
 
@@ -175,10 +175,7 @@ class Computer < Player
   def choose(history, player_move)
     case name
     when 'R2D2' then self.move = Move.new('rock')
-    when 'Hal'
-      Move::WINNING_MOVES.keys.each do |move_option|
-        self.move = Move.new(move_option) if Move::WINNING_MOVES[move_option].include?(player_move)
-      end
+    when 'Hal' then self.move = hal_choice(player_move)
     else
       self.move = @moves[Move::VALUES.sample]
       weighted_moves = Move::VALUES.dup * 2
@@ -188,6 +185,14 @@ class Computer < Player
       end
     end
     move
+  end
+
+  def hal_choice(player_move)
+    Move::WINNING_MOVES.keys.each do |move_option|
+      if Move::WINNING_MOVES[move_option].include?(player_move)
+        return Move.new(move_option)
+      end
+    end
   end
 end
 
@@ -218,15 +223,18 @@ class RPSGame
 
     if human_move > computer_move
       puts "#{human_name} won!"
-      score_board.increase_score(human_name)
-      history.update(human_name, computer_move.value)
+      update_scoreboard_and_history(human_name, computer_move)
     elsif human_move < computer_move
       puts "#{computer_name} won!"
-      score_board.increase_score(computer_name)
-      history.update(computer_name, computer_move.value)
+      update_scoreboard_and_history(computer_name, computer_move)
     else
       puts "It's a tie."
     end
+  end
+
+  def update_scoreboard_and_history(winner_name, computer_move)
+    score_board.increase_score(winner_name)
+    history.update(winner_name, computer_move)
   end
 
   def display_overall_winner
