@@ -1,39 +1,32 @@
-require 'pry'
-#TODO - Check for move win rate when computer chooses and implement logic to re-choose winningest move
-#  maybe create a new array of moves based on win_rate with highest win rate in array most times and others
-#  in array decreasing amounts.
-
-COMPUTER_NAMES = %w[R2D2 C3PO Computer Hal].freeze
-
-class GameResults
-  attr_accessor :computer_move, :human_move, :winner
-  def initialize(computer_move, human_move, winner_name)
-    @computer_move = computer_move
-    @human_move = human_move
-    @winner = winner_name
-  end
-end
-
 class GameHistory
-  def initialize
-    @game_results = []
+  attr_reader :player_name, :game_results
+  def initialize(player_name)
+    @player_name = player_name
+    @game_results = {
+      wins: [],
+      losses: []
+    }
   end
 
-  def games_played
-    @game_results.size
+  def update(winner_name, move)
+    if player_name.eql?(winner_name)
+      game_results[:wins] << move.value
+    else
+      game_results[:losses] << move.value
+    end
   end
 
-  def number_of_computer_wins
-    @game_results.count { |game| COMPUTER_NAMES.include? game.winner }
-  end
+  def move_loss_rate(move)
+    num_move_losses = @game_results[:losses].select do |losing_move|
+      losing_move.eql?(move)
+    end.size
 
-  def computer_loss_rate(move)
-    return 1.0 if games_played..zero? || times_used(move).zero? # TODO add times_used(move) method
-    1 - number_of_computer_winws(move) / games_played.to_f # TODO fix
-  end
-
-  def update(computer_move, human_move, winner_name)
-    @game_results << GameResults.new(computer_move, human_move, winner_name)
+    total_games = game_results[:wins].size + game_results[:losses].size
+    if total_games.zero?
+      0
+    else
+      num_move_losses / (Float total_games)
+    end
   end
 end
 
@@ -74,7 +67,7 @@ class Move
     'spock' => %w[rock scissors],
     'scissors' => %w[lizard paper],
     'paper' => %w[spock rock],
-    'rock' => %w[paper lizard],
+    'rock' => %w[scissors lizard],
     'lizard' => %w[paper spock]
   }
 
@@ -95,12 +88,52 @@ class Move
   end
 end
 
+class Spock < Move
+  def initialize
+    @value = 'spock'
+  end
+end
+
+class Paper < Move
+  def initialize
+    @value = 'paper'
+  end
+end
+
+class Rock < Move
+  def initialize
+    @value = 'rock'
+  end
+end
+
+class Scissors < Move
+  def initialize
+    @value = 'scissors'
+  end
+end
+
+class Lizard < Move
+  def initialize
+    @value = 'lizard'
+  end
+end
+
 class Player
   attr_accessor :move, :name
+  def initialize
+    @moves = {
+      'spock' => Spock.new,
+      'lizard' => Lizard.new,
+      'rock' => Rock.new,
+      'paper' => Paper.new,
+      'scissors' => Scissors.new
+    }
+  end
 end
 
 class Human < Player
   def initialize
+    super
     set_name
   end
 
@@ -123,7 +156,7 @@ class Human < Player
       break if Move::VALUES.include?(choice)
       puts 'Sorry, invalid choice'
     end
-    self.move = Move.new(choice)
+    self.move = @moves[choice]
   end
 end
 
@@ -137,22 +170,38 @@ class Computer < Player
     self.name = %w[R2D2 C3PO Computer Hal].sample
   end
 
-  def choose(game_history)
-    self.move = Move.new(Move::VALUES.sample)
-    return move if game_history.computer_loss_rate(move) > 0.6
+  def choose(history, player_move)
+    case name
+    when 'R2D2' then self.move = Move.new('rock')
+    when 'Hal' then self.move = hal_choice(player_move)
+    else
+      self.move = @moves[Move::VALUES.sample]
+      weighted_moves = Move::VALUES.dup * 2
+      until history.move_loss_rate(move.value) < 0.6
+        weighted_moves.delete_at(weighted_moves.index(move.value))
+        self.move = weighted_moves.sample
+      end
+    end
+    move
+  end
 
-    self.move = Move.new(Move::VALUES.select { |val| val != move }.sample)
+  def hal_choice(player_move)
+    Move::WINNING_MOVES.keys.each do |move_option|
+      if Move::WINNING_MOVES[move_option].include?(player_move)
+        return Move.new(move_option)
+      end
+    end
   end
 end
 
 class RPSGame
-  attr_accessor :human, :computer, :score_board, :game_history
+  attr_accessor :human, :computer, :score_board, :history
 
   def initialize
     @human = Human.new
     @computer = Computer.new
-    @score_board = ScoreBoard.new(human.name, computer.name)
-    @game_history = GameHistory.new
+    @score_board = ScoreBoard.new(@human.name, @computer.name)
+    @history = GameHistory.new(computer.name)
   end
 
   def display_welcome_message
@@ -164,30 +213,26 @@ class RPSGame
     puts "#{computer.name} chose #{computer.move}"
   end
 
-  def find_winner(computer, human)
+  def display_winner
     human_name = human.name
     computer_name = computer.name
     human_move = human.move
     computer_move = computer.move
 
     if human_move > computer_move
-      return human_name
+      puts "#{human_name} won!"
+      update_scoreboard_and_history(human_name, computer_move)
     elsif human_move < computer_move
-      return computer_name
+      puts "#{computer_name} won!"
+      update_scoreboard_and_history(computer_name, computer_move)
     else
-      return 'tie'
+      puts "It's a tie."
     end
   end
 
-  def display_winner_and_update_scoreboard
-    winner_name = find_winner(computer, human)
-
-    if winner_name.eql?('tie')
-      puts "It's a tie."
-    else
-      puts "#{winner_name} won!"
-      score_board.increase_score(winner_name)
-    end
+  def update_scoreboard_and_history(winner_name, computer_move)
+    score_board.increase_score(winner_name)
+    history.update(winner_name, computer_move)
   end
 
   def display_overall_winner
@@ -207,14 +252,10 @@ class RPSGame
 
   def play_single_round
     human.choose
-    computer.choose(game_history)
+    computer.choose(history, human.move.value)
     display_player_choices
-    binding.pry
-    display_winner_and_update_scoreboard
-    game_history.update(computer.move, human.move, 
-      find_winner(computer, human))
+    display_winner
     sleep 2
-    binding.pry
   end
 
   def play
