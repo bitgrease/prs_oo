@@ -142,8 +142,8 @@ class Human < Player
     loop do
       puts "What's your name?"
       name = gets.chomp
-      break unless name =~ /\s/
-      puts "Sorry, you must enter a valid name (alpha-numeric chars only)."
+      break unless name =~ /\s/ || name.empty?
+      puts "Sorry, you must enter a valid name (no white space chars allowed)."
     end
     self.name = name
   end
