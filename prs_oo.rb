@@ -142,7 +142,7 @@ class Human < Player
     loop do
       puts "What's your name?"
       name = gets.chomp
-      break unless name.empty?
+      break if name =~ /[a-z0-9]+/i
       puts "Sorry, you must enter a value."
     end
     self.name = name
