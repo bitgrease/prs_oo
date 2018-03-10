@@ -31,6 +31,7 @@ class GameHistory
 end
 
 class ScoreBoard
+  WINNING_SCORE = 10
   def initialize(name_one, name_two)
     @name_one = name_one
     @name_two = name_two
@@ -46,6 +47,7 @@ class ScoreBoard
   end
 
   def display_score
+  	puts "#{WINNING_SCORE} points wins the match."
     @scores.each do |name, score|
       puts "#{name} has #{score} points"
     end
