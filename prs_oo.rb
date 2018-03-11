@@ -31,7 +31,7 @@ class GameHistory
 end
 
 class ScoreBoard
-  WINNING_SCORE = 10
+  WINNING_SCORE = 3
   def initialize(name_one, name_two)
     @name_one = name_one
     @name_two = name_two
@@ -54,11 +54,15 @@ class ScoreBoard
   end
 
   def winner?
-    @scores.values.any? { |score| score.eql?(10) }
+    @scores.values.any? { |score| score.eql?(WINNING_SCORE) }
   end
 
   def winner_name
-    @scores.key(10)
+    @scores.key(WINNING_SCORE)
+  end
+
+  def reset
+    @scores.keys.each { |name| @scores[name] = 0 }
   end
 end
 
@@ -142,10 +146,10 @@ class Human < Player
   def set_name
     name = nil
     loop do
-      puts "What's your name?"
+      print "What's your name?: "
       name = gets.chomp
-      break unless name =~ /\s/ || name.empty?
-      puts "Sorry, you must enter a valid name (no white space chars allowed)."
+      break unless name =~ /[^a-z|0-9]/i || name.empty?
+      puts "Sorry, you must enter a valid name (alphanumeric chars only)."
     end
     self.name = name
   end
@@ -206,6 +210,10 @@ class RPSGame
     @history = GameHistory.new(computer.name)
   end
 
+  def clear_screen
+    system('cls') || system('clear')
+  end
+
   def display_welcome_message
     puts "Hi #{human.name}! Welcome to Rock, Paper, Scissors!"
   end
@@ -245,8 +253,8 @@ class RPSGame
     answer = nil
     loop do
       puts "Would you like to play again, #{human.name}? (y/n)"
-      answer = gets.chomp
-      break if %w[y n].include? answer.downcase
+      answer = gets.chomp.downcase
+      break if %w[y n].include? answer
       puts 'Sorry, must be y or n.'
     end
     answer.eql?('y')
@@ -261,19 +269,24 @@ class RPSGame
   end
 
   def play
+    clear_screen
     display_welcome_message
-    score_board.display_score
-
+    sleep 1
     loop do
-      play_single_round
-      system('cls') || system('clear')
+      clear_screen
       score_board.display_score
-      break unless !score_board.winner? || play_again?
+      loop do
+        play_single_round
+        clear_screen
+        score_board.display_score
+        break unless !score_board.winner?
+      end
+      clear_screen
+      display_overall_winner
+      play_again? ? score_board.reset : break
     end
-    system('cls') || system('clear')
-    display_overall_winner
+    puts 'Thanks for playing!'
   end
 end
 
-system('cls') || system('clear')
 RPSGame.new.play
