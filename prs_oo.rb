@@ -223,20 +223,21 @@ class RPSGame
     puts "#{computer.name} chose #{computer.move}"
   end
 
-  def display_winner
+  def decide_winner
     human_name = human.name
     computer_name = computer.name
     human_move = human.move
     computer_move = computer.move
 
     if human_move > computer_move
-      puts "#{human_name} won!"
-      update_scoreboard_and_history(human_name, computer_move)
+      human_name
+      #winner_name, computer_move
+      # update_scoreboard_and_history(human_name, computer_move)
     elsif human_move < computer_move
-      puts "#{computer_name} won!"
-      update_scoreboard_and_history(computer_name, computer_move)
+      computer_name
+      # update_scoreboard_and_history(computer_name, computer_move)
     else
-      puts "It's a tie."
+      "tie."
     end
   end
 
@@ -247,6 +248,14 @@ class RPSGame
 
   def display_overall_winner
     puts "#{score_board.winner_name} is the overall winner!"
+  end
+
+  def display_winner(winner_name)
+    if winner_name.eql?('tie')
+      puts "It's a tie."
+    else
+      puts "#{winner_name} won!"
+    end
   end
 
   def play_again?
@@ -264,7 +273,9 @@ class RPSGame
     human.choose
     computer.choose(history, human.move.value)
     display_player_choices
-    display_winner
+    winner_name = decide_winner
+    update_scoreboard_and_history(winner_name, computer.move)
+    display_winner(winner_name)
     sleep 2
   end
 
