@@ -43,11 +43,11 @@ class ScoreBoard
   end
 
   def increase_score(player_name)
-    @scores[player_name] += 1
+    @scores[player_name] += 1 if @scores.keys.include?(player_name)
   end
 
   def display_score
-  	puts "#{WINNING_SCORE} points wins the match."
+    puts "#{WINNING_SCORE} points wins the match."
     @scores.each do |name, score|
       puts "#{name} has #{score} points"
     end
@@ -231,11 +231,8 @@ class RPSGame
 
     if human_move > computer_move
       human_name
-      #winner_name, computer_move
-      # update_scoreboard_and_history(human_name, computer_move)
     elsif human_move < computer_move
       computer_name
-      # update_scoreboard_and_history(computer_name, computer_move)
     else
       "tie."
     end
@@ -280,19 +277,15 @@ class RPSGame
   end
 
   def play
-    clear_screen
-    display_welcome_message
-    sleep 1
     loop do
       clear_screen
+      display_welcome_message if human.name
       score_board.display_score
       loop do
-        play_single_round
-        clear_screen
+        play_single_round && clear_screen
         score_board.display_score
         break unless !score_board.winner?
       end
-      clear_screen
       display_overall_winner
       play_again? ? score_board.reset : break
     end
@@ -300,4 +293,5 @@ class RPSGame
   end
 end
 
+system('cls') || system('clear')
 RPSGame.new.play
